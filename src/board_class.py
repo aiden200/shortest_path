@@ -8,6 +8,7 @@ class Board_class:
         if height > 10: self.height = 10
         self.open = {}
         self.close = {}
+        self.non_traverse = {}
         self.current = None
     
     

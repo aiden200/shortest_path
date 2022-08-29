@@ -1,7 +1,7 @@
 '''
 Some properties to keep in mind:
-Board_node takes in 5 arguments:
-    x_cord, y_cord, gcost, hcost, status
+Board_node takes in 4 arguments:
+    x_cord, y_cord, gcost, hcost
 
 This is the A* algo taking place, here is the basic pseudocode. In the actual code, there is more to this: 
 
@@ -30,6 +30,7 @@ loop
 
 from node_class import Board_node
 import math
+import pygame
 
 
 def find_dist(start, end):
@@ -37,9 +38,14 @@ def find_dist(start, end):
     return round(math.dist([start[0],start[1]], [end[0],end[1]]),2)
 
 
-def find_shortest_path(start_cord, end_cord, board, log):
+def find_shortest_path(start_cord, end_cord, board, log, display, block_size):
     log.info("Starting algorithm")
-    board.open[start_cord] = Board_node(start_cord[0], end_cord[0], 0, find_dist(start_cord, end_cord))
+    board.open[start_cord] = Board_node(start_cord[0], start_cord[1], 0, find_dist(start_cord, end_cord))
+    for key in board.non_traverse:
+        rect = pygame.Rect(key[0]*block_size, key[1]*block_size,block_size,block_size)
+        pygame.draw.rect(display, 'grey', rect)
+    pygame.display.update()
+    
 
     while True:
         # choosing which node to look at
@@ -47,6 +53,7 @@ def find_shortest_path(start_cord, end_cord, board, log):
         temp = []
         for key in board.open:
             check_val = board.open[key]
+            # print(check_val.fcost)
             if check_val.fcost < low:
                 temp = [check_val]
                 low = check_val.fcost
@@ -55,7 +62,7 @@ def find_shortest_path(start_cord, end_cord, board, log):
                 temp.append(check_val)
         
         # we have tied values, we choose the one with the lowest hcost, if still a tie, we just choose the first one
-        if len(temp > 1):
+        if len(temp) > 1:
             low = temp[0].hcost
             board.current = temp[0]
             for val in temp:
@@ -65,12 +72,37 @@ def find_shortest_path(start_cord, end_cord, board, log):
 
         #remove the current coordinates from the open section
         current_cords = (board.current.x_cord, board.current.y_cord)
+        log.info(f"Current: {current_cords}")
         board.open.pop(current_cords)
         board.close[current_cords] = board.current
+        rect = pygame.Rect(board.current.x_cord*block_size, board.current.y_cord*block_size,block_size,block_size)
+        pygame.draw.rect(display, 'red', rect)
         if current_cords == end_cord:
+            rect = pygame.Rect(start_cord[0]*block_size, start_cord[1]*block_size,block_size,block_size)
+            pygame.draw.rect(display, 'white', rect)
+            print(f"Shortest cost: {board.current.fcost}")
             return board.current # traverse back with parent to get total path
 
         
-        
+        #check neighbour 
+        for i in range(-1, 2, 1):
+            for j in range(-1, 2, 1):
+                neighbour = (board.current.x_cord + i, board.current.y_cord + j) 
+                if (board.current.x_cord + i) < 0 or (board.current.x_cord + i) > board.length or (board.current.y_cord + j) < 0 or (board.current.y_cord + j) > board.height:
+                    continue
+                if neighbour in board.non_traverse or neighbour in board.close:
+                    continue
+                
+                dist = find_dist(current_cords, neighbour) + board.current.gcost
+                if neighbour not in board.open:
+                    temp_node = Board_node(board.current.x_cord + i, board.current.y_cord + j, dist, find_dist(neighbour, end_cord))
+                    temp_node.parent = board.current
+                    board.open[neighbour] = temp_node
+                    rect = pygame.Rect((board.current.x_cord + i)*block_size, (board.current.y_cord + j)*block_size,block_size,block_size)
+                    pygame.draw.rect(display, 'green', rect)
+                elif board.open[neighbour].fcost > dist:
+                    board.open[neighbour].fcost = dist
+                    board.open[neighbour].parent = board.current
 
+        pygame.display.update()
 
