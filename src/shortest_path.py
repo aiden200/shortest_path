@@ -38,13 +38,9 @@ def find_dist(start, end):
     return round(math.dist([start[0],start[1]], [end[0],end[1]]),2)
 
 
-def find_shortest_path(start_cord, end_cord, board, log, display, block_size):
+def find_shortest_path(start_cord, end_cord, board, log, display, block_size, COLOR):
     log.info("Starting algorithm")
     board.open[start_cord] = Board_node(start_cord[0], start_cord[1], 0, find_dist(start_cord, end_cord))
-    for key in board.non_traverse:
-        rect = pygame.Rect(key[0]*block_size, key[1]*block_size,block_size,block_size)
-        pygame.draw.rect(display, 'grey', rect)
-    pygame.display.update()
     
 
     while True:
@@ -72,11 +68,12 @@ def find_shortest_path(start_cord, end_cord, board, log, display, block_size):
 
         #remove the current coordinates from the open section
         current_cords = (board.current.x_cord, board.current.y_cord)
-        log.info(f"Current: {current_cords}")
+        # log.info(f"Current: {current_cords}")
         board.open.pop(current_cords)
         board.close[current_cords] = board.current
-        rect = pygame.Rect(board.current.x_cord*block_size, board.current.y_cord*block_size,block_size,block_size)
-        pygame.draw.rect(display, 'red', rect)
+        if COLOR:
+            rect = pygame.Rect(board.current.x_cord*block_size, board.current.y_cord*block_size,block_size,block_size)
+            pygame.draw.rect(display, 'red', rect)
         if current_cords == end_cord:
             rect = pygame.Rect(start_cord[0]*block_size, start_cord[1]*block_size,block_size,block_size)
             pygame.draw.rect(display, 'white', rect)
@@ -98,8 +95,9 @@ def find_shortest_path(start_cord, end_cord, board, log, display, block_size):
                     temp_node = Board_node(board.current.x_cord + i, board.current.y_cord + j, dist, find_dist(neighbour, end_cord))
                     temp_node.parent = board.current
                     board.open[neighbour] = temp_node
-                    rect = pygame.Rect((board.current.x_cord + i)*block_size, (board.current.y_cord + j)*block_size,block_size,block_size)
-                    pygame.draw.rect(display, 'green', rect)
+                    if COLOR:
+                        rect = pygame.Rect((board.current.x_cord + i)*block_size, (board.current.y_cord + j)*block_size,block_size,block_size)
+                        pygame.draw.rect(display, 'green', rect)
                 elif board.open[neighbour].fcost > dist:
                     board.open[neighbour].fcost = dist
                     board.open[neighbour].parent = board.current
